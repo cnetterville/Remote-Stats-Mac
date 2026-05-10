@@ -248,15 +248,15 @@ struct ServerRow: View {
     let status: ServerStatus?
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             osIcon
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text(server.name)
-                    .font(.headline)
+                    .font(.title3.weight(.semibold))
                     .lineLimit(1)
                 Text(server.port == 22 ? server.host : "\(server.host):\(String(server.port))")
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
@@ -266,7 +266,7 @@ struct ServerRow: View {
             uptimeTrailing
                 .fixedSize()
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 6)
     }
 
     @ViewBuilder
@@ -296,35 +296,35 @@ struct ServerRow: View {
                 ProgressView()
                     .scaleEffect(0.75)
             } else {
-                VStack(alignment: .trailing, spacing: 3) {
+                VStack(alignment: .trailing, spacing: 4) {
                     if status.isOnline {
                         Text(status.uptime)
-                            .font(.caption)
+                            .font(.callout)
                             .foregroundStyle(.green)
                             .monospacedDigit()
                             .lineLimit(1)
-                        HStack(spacing: 6) {
+                        HStack(spacing: 8) {
                             if !status.loadAverage.isEmpty, status.cpuCores > 0,
                                let load = Double(status.loadAverage) {
                                 let cpuPct = min(load / Double(status.cpuCores), 1.0)
-                                HStack(spacing: 2) {
+                                HStack(spacing: 3) {
                                     Image(systemName: "cpu")
-                                        .font(.system(size: 7))
+                                        .font(.system(size: 9))
                                         .foregroundStyle(.secondary)
                                     Text("\(Int(cpuPct * 100))%")
-                                        .font(.caption2.monospacedDigit())
+                                        .font(.caption.monospacedDigit())
                                         .foregroundStyle(cpuTint(cpuPct))
                                         .lineLimit(1)
                                         .fixedSize()
                                 }
                             }
                             if status.memoryPercent > 0 {
-                                HStack(spacing: 2) {
+                                HStack(spacing: 3) {
                                     Image(systemName: "memorychip")
-                                        .font(.system(size: 7))
+                                        .font(.system(size: 9))
                                         .foregroundStyle(.secondary)
                                     Text("\(Int(status.memoryPercent * 100))%")
-                                        .font(.caption2.monospacedDigit())
+                                        .font(.caption.monospacedDigit())
                                         .foregroundStyle(memoryTint(status.memoryPercent))
                                         .lineLimit(1)
                                         .fixedSize()
@@ -333,12 +333,12 @@ struct ServerRow: View {
                         }
                     } else {
                         Text("Offline")
-                            .font(.caption)
+                            .font(.callout)
                             .foregroundStyle(.red)
                     }
                     if let checked = status.lastChecked {
                         Text(checked, style: .relative)
-                            .font(.caption2)
+                            .font(.caption)
                             .foregroundStyle(.tertiary)
                     }
                 }
