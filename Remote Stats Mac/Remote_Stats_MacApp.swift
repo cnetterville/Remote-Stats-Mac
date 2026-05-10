@@ -2,8 +2,6 @@
 //  Remote_Stats_MacApp.swift
 //  Remote Stats Mac
 //
-//  Created by Curtis Netterville on 5/9/26.
-//
 
 import SwiftUI
 
