@@ -24,22 +24,29 @@ struct AddUPSView: View {
         NavigationStack {
             Form {
                 Section("Display") {
-                    TextField("Name (optional)", text: $name)
-                        .autocorrectionDisabled()
+                    LabeledContent("Name") {
+                        TextField("Optional", text: $name)
+                            .multilineTextAlignment(.trailing)
+                            .autocorrectionDisabled()
+                    }
                 }
 
                 Section {
-                    TextField("Host / IP", text: $host)
-                        .autocorrectionDisabled()
-                    HStack {
-                        Text("Port")
-                        Spacer()
-                        TextField("3493", text: $port)
+                    LabeledContent("Host / IP") {
+                        TextField("192.168.1.1", text: $host)
                             .multilineTextAlignment(.trailing)
-                            .frame(width: 70)
+                            .autocorrectionDisabled()
                     }
-                    TextField("UPS name", text: $upsName)
-                        .autocorrectionDisabled()
+                    LabeledContent("Port") {
+                        TextField("", text: $port)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 80)
+                    }
+                    LabeledContent("UPS Name") {
+                        TextField("ups", text: $upsName)
+                            .multilineTextAlignment(.trailing)
+                            .autocorrectionDisabled()
+                    }
                 } header: {
                     Text("NUT Server")
                 } footer: {
@@ -47,11 +54,19 @@ struct AddUPSView: View {
                 }
 
                 Section("Authentication (optional)") {
-                    TextField("Username", text: $username)
-                        .autocorrectionDisabled()
-                    SecureField("Password", text: $password)
+                    LabeledContent("Username") {
+                        TextField("", text: $username)
+                            .multilineTextAlignment(.trailing)
+                            .autocorrectionDisabled()
+                    }
+                    LabeledContent("Password") {
+                        SecureField("", text: $password)
+                            .multilineTextAlignment(.trailing)
+                    }
                 }
             }
+            .formStyle(.grouped)
+            .frame(minWidth: 550, minHeight: 350)
             .navigationTitle(existingConfig == nil ? "Add UPS" : "Edit UPS")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

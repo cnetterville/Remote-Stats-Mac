@@ -37,33 +37,27 @@ struct AddServerView: View {
         NavigationStack {
             Form {
                 Section("Server") {
-                    LabeledContent {
-                        TextField("My Production Server", text: $name)
+                    LabeledContent("Name") {
+                        TextField("Server Name", text: $name)
                             .multilineTextAlignment(.trailing)
-                    } label: {
-                        Text("Name")
                     }
 
-                    LabeledContent {
-                        TextField("192.168.1.1 or hostname", text: $host)
+                    LabeledContent("Host / IP") {
+                        TextField("192.168.1.1", text: $host)
                             .multilineTextAlignment(.trailing)
                             .autocorrectionDisabled()
-                    } label: {
-                        Text("Host / IP")
                     }
 
-                    LabeledContent {
-                        TextField("22", text: $port)
+                    LabeledContent("Port") {
+                        TextField("", text: $port)
                             .multilineTextAlignment(.trailing)
-                    } label: {
-                        Text("Port")
+                            .frame(width: 80)
                     }
 
-                    LabeledContent {
-                        TextField("30", text: $timeout)
+                    LabeledContent("Timeout (s)") {
+                        TextField("", text: $timeout)
                             .multilineTextAlignment(.trailing)
-                    } label: {
-                        Text("Timeout (s)")
+                            .frame(width: 80)
                     }
 
                     Picker("Platform", selection: $platform) {
@@ -188,6 +182,8 @@ struct AddServerView: View {
                         .foregroundStyle(.secondary)
                 }
             }
+            .formStyle(.grouped)
+            .frame(minWidth: 550, minHeight: 400)
             .navigationTitle(existingServer == nil ? "Add Server" : "Edit Server")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

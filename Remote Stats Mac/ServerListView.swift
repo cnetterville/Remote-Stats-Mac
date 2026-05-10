@@ -50,6 +50,7 @@ struct ServerListView: View {
     @Environment(ServerStore.self) private var store
     @State private var showAddServer = false
     @State private var editingServer: ServerConfig? = nil
+    @State private var isRefreshing = false
     @AppStorage("refreshInterval") private var refreshInterval = 0
 
     private var existingTags: [String] {
@@ -94,6 +95,24 @@ struct ServerListView: View {
                     Button { showAddServer = true } label: {
                         Image(systemName: "plus.circle.fill").font(.title3)
                     }
+                }
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        Task {
+                            isRefreshing = true
+                            await refreshAllStatuses(force: true)
+                            isRefreshing = false
+                        }
+                    } label: {
+                        if isRefreshing {
+                            ProgressView()
+                                .scaleEffect(0.7)
+                        } else {
+                            Image(systemName: "arrow.clockwise")
+                                .font(.title3)
+                        }
+                    }
+                    .disabled(isRefreshing || store.servers.isEmpty)
                 }
             }
             .sheet(isPresented: $showAddServer) {

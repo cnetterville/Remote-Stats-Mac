@@ -62,6 +62,7 @@ struct UPSListView: View {
     @Environment(NUTStore.self) private var store
     @State private var showAdd = false
     @State private var editing: NUTConfig? = nil
+    @State private var isRefreshing = false
     @AppStorage("refreshInterval") private var refreshInterval = 0
 
     var body: some View {
@@ -88,6 +89,24 @@ struct UPSListView: View {
                     Button { showAdd = true } label: {
                         Image(systemName: "plus.circle.fill").font(.title3)
                     }
+                }
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        Task {
+                            isRefreshing = true
+                            await refreshAllStatuses(force: true)
+                            isRefreshing = false
+                        }
+                    } label: {
+                        if isRefreshing {
+                            ProgressView()
+                                .scaleEffect(0.7)
+                        } else {
+                            Image(systemName: "arrow.clockwise")
+                                .font(.title3)
+                        }
+                    }
+                    .disabled(isRefreshing || store.configs.isEmpty)
                 }
             }
             .sheet(isPresented: $showAdd) {
