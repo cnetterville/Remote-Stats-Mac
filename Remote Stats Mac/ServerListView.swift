@@ -79,16 +79,17 @@ struct ServerListView: View {
                     serverList
                 }
             }
-            .navigationTitle("Servers")
+            .navigationTitle("")
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    HStack(spacing: 6) {
+                    HStack(spacing: 8) {
                         Image(systemName: "server.rack")
                             .foregroundStyle(.blue)
                         Text("Servers")
-                            .font(.headline)
                     }
+                    .font(.title3.weight(.semibold))
                 }
+                .sharedBackgroundVisibility(.hidden)
                 ToolbarItem(placement: .primaryAction) {
                     Button { showAddServer = true } label: {
                         Image(systemName: "plus.circle.fill").font(.title3)

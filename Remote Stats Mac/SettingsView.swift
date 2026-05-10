@@ -68,7 +68,18 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .navigationTitle("Settings")
+        .navigationTitle("")
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                HStack(spacing: 8) {
+                    Image(systemName: "gear")
+                        .foregroundStyle(.gray)
+                    Text("Settings")
+                }
+                .font(.title3.weight(.semibold))
+            }
+            .sharedBackgroundVisibility(.hidden)
+        }
     }
 
     private var appVersion: String {

@@ -73,16 +73,17 @@ struct UPSListView: View {
                     upsList
                 }
             }
-            .navigationTitle("UPS")
+            .navigationTitle("")
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    HStack(spacing: 6) {
+                    HStack(spacing: 8) {
                         Image(systemName: "bolt.shield.fill")
                             .foregroundStyle(.orange)
                         Text("UPS")
-                            .font(.headline)
                     }
+                    .font(.title3.weight(.semibold))
                 }
+                .sharedBackgroundVisibility(.hidden)
                 ToolbarItem(placement: .primaryAction) {
                     Button { showAdd = true } label: {
                         Image(systemName: "plus.circle.fill").font(.title3)
@@ -195,22 +196,22 @@ struct UPSRow: View {
     let status: UPSRowStatus?
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             statusIcon
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 5) {
                 HStack {
                     Text(config.name)
-                        .font(.headline)
+                        .font(.title3.weight(.semibold))
                     Spacer()
                     trailingInfo
                 }
                 Text("\(config.host):\(String(config.port)) · \(config.upsName)")
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 6)
     }
 
     // MARK: Icon
@@ -246,35 +247,35 @@ struct UPSRow: View {
             if status.isChecking {
                 ProgressView().scaleEffect(0.75)
             } else {
-                VStack(alignment: .trailing, spacing: 2) {
+                VStack(alignment: .trailing, spacing: 4) {
                     if status.error != nil {
                         Text("Unreachable")
-                            .font(.caption)
+                            .font(.callout)
                             .foregroundStyle(.red)
                     } else {
                         let flag = UPSStats.primaryFlag(from: status.rawStatus)
                         Text(flag?.displayName ?? "Unknown")
-                            .font(.caption)
+                            .font(.callout)
                             .foregroundStyle(flag?.color ?? .gray)
-                        HStack(spacing: 6) {
+                        HStack(spacing: 8) {
                             if let charge = status.batteryCharge {
                                 Text("\(Int(charge))%")
-                                    .font(.caption2)
+                                    .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
                             if let runtime = status.formattedRuntime {
                                 Image(systemName: "clock")
-                                    .font(.system(size: 7))
+                                    .font(.system(size: 9))
                                     .foregroundStyle(.secondary)
                                 Text(runtime)
-                                    .font(.caption2)
+                                    .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
                         }
                     }
                     if let checked = status.lastChecked {
                         Text(checked, style: .relative)
-                            .font(.caption2)
+                            .font(.caption)
                             .foregroundStyle(.tertiary)
                     }
                 }

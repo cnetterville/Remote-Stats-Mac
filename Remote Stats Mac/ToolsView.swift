@@ -878,7 +878,18 @@ struct ToolsView: View {
                 }
                 .padding()
             }
-            .navigationTitle("Tools")
+            .navigationTitle("")
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "wrench.and.screwdriver")
+                            .foregroundStyle(.indigo)
+                        Text("Tools")
+                    }
+                    .font(.title3.weight(.semibold))
+                }
+                .sharedBackgroundVisibility(.hidden)
+            }
             .onChange(of: viewModel.selectedTarget) {
                 if !availableTools.contains(viewModel.selectedTool) {
                     viewModel.selectedTool = availableTools.first ?? .ping
