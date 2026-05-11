@@ -61,6 +61,14 @@ class ServerStore {
         saveUpdateCache()
     }
 
+    func reloadCredentials() {
+        for i in servers.indices {
+            let id = servers[i].id.uuidString
+            servers[i].password = KeychainService.load(for: "server-\(id)") ?? servers[i].password
+            servers[i].privateKey = KeychainService.load(for: "server-key-\(id)") ?? servers[i].privateKey
+        }
+    }
+
     func saveStatuses() {
         let flat = Dictionary(uniqueKeysWithValues: statuses.map { ($0.key.uuidString, $0.value) })
         guard let encoded = try? JSONEncoder().encode(flat) else { return }

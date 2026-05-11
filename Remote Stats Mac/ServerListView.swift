@@ -128,7 +128,22 @@ struct ServerListView: View {
                 }
             }
             .task(id: refreshInterval) {
-                await refreshAllStatuses(force: true)
+                store.reloadCredentials()
+                await refreshAllSequentially()
+                let offline = store.servers.filter { store.statuses[$0.id]?.isOnline == false }
+                for server in offline where !Task.isCancelled {
+                    await SSHConnectionPool.shared.invalidate(server.id)
+                    let r = await SSHService.checkStatus(for: server)
+                    if r.isOnline {
+                        store.statuses[server.id] = ServerStatus(
+                            isOnline: true, uptime: r.uptime, osType: r.osType,
+                            loadAverage: r.loadAverage, memoryPercent: r.memoryPercent,
+                            cpuCores: r.cpuCores, latencyMs: r.latencyMs,
+                            isChecking: false, lastChecked: Date()
+                        )
+                        store.saveStatuses()
+                    }
+                }
                 guard refreshInterval > 0 else { return }
                 while !Task.isCancelled {
                     try? await Task.sleep(for: .seconds(refreshInterval))
@@ -215,16 +230,31 @@ struct ServerListView: View {
 
     // MARK: - Status Checking
 
+    private func refreshAllSequentially() async {
+        for server in store.servers {
+            store.statuses[server.id] = ServerStatus(isChecking: true)
+        }
+        for server in store.servers {
+            guard !Task.isCancelled else { break }
+            let cachedOS = store.statuses[server.id]?.osType
+            let r = await SSHService.checkStatus(for: server, knownOSType: cachedOS)
+            store.statuses[server.id] = ServerStatus(
+                isOnline: r.isOnline, uptime: r.uptime, osType: r.osType,
+                loadAverage: r.loadAverage, memoryPercent: r.memoryPercent,
+                cpuCores: r.cpuCores, latencyMs: r.latencyMs,
+                isChecking: false, lastChecked: Date()
+            )
+        }
+        store.saveStatuses()
+    }
+
     private func refreshAllStatuses(force: Bool = false) async {
         for server in store.servers {
             if force {
-                // Pull-to-refresh: show spinner over everything
                 store.statuses[server.id] = ServerStatus(isChecking: true)
             } else if store.statuses[server.id] == nil {
-                // No cached data: show spinner
                 store.statuses[server.id] = ServerStatus(isChecking: true)
             }
-            // Has cached data: leave visible, update silently in background
         }
         await withTaskGroup(of: (UUID, Bool, String, OSType, String, Double, Int, Double?).self) { group in
             for server in store.servers {
@@ -246,15 +276,10 @@ struct ServerListView: View {
         Task {
             let r = await SSHService.checkStatus(for: server)
             store.statuses[server.id] = ServerStatus(
-                isOnline: r.isOnline,
-                uptime: r.uptime,
-                osType: r.osType,
-                loadAverage: r.loadAverage,
-                memoryPercent: r.memoryPercent,
-                cpuCores: r.cpuCores,
-                latencyMs: r.latencyMs,
-                isChecking: false,
-                lastChecked: Date()
+                isOnline: r.isOnline, uptime: r.uptime, osType: r.osType,
+                loadAverage: r.loadAverage, memoryPercent: r.memoryPercent,
+                cpuCores: r.cpuCores, latencyMs: r.latencyMs,
+                isChecking: false, lastChecked: Date()
             )
             store.saveStatuses()
         }
