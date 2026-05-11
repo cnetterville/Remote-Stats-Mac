@@ -128,7 +128,7 @@ struct ServerListView: View {
                 }
             }
             .task(id: refreshInterval) {
-                await refreshAllStatuses()
+                await refreshAllStatuses(force: true)
                 guard refreshInterval > 0 else { return }
                 while !Task.isCancelled {
                     try? await Task.sleep(for: .seconds(refreshInterval))

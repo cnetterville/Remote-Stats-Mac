@@ -14,10 +14,13 @@ class ServerViewModel {
     var isLiveUpdating = false
     var rxRate: Int64 = 0
     var txRate: Int64 = 0
+    var cpuHistory: [Double] = []
+    var memoryHistory: [Double] = []
 
     let server: ServerConfig
     var store: ServerStore?
 
+    private static let maxHistoryPoints = 30
     private var pollingTask: Task<Void, Never>?
 
     init(server: ServerConfig) {
@@ -28,6 +31,8 @@ class ServerViewModel {
         stopPolling()
         if !isRefresh {
             isLoading = true
+            cpuHistory = []
+            memoryHistory = []
         }
         errorMessage = nil
         rxRate = 0
@@ -49,6 +54,8 @@ class ServerViewModel {
                 store?.updateCache[server.id] = CachedUpdateInfo(count: updates, lastFetched: Date())
                 store?.saveUpdateCache()
             }
+            recordHistory()
+            startPolling()
         } catch is CancellationError {
             // Ignore — task was cancelled (e.g. view disappeared)
         } catch {
@@ -179,6 +186,7 @@ class ServerViewModel {
                     stats?.rxBytes = live.rxBytes
                     stats?.txBytes = live.txBytes
 
+                    recordHistory()
                     isLiveUpdating = true
                 }
             } catch is CancellationError {
@@ -187,6 +195,20 @@ class ServerViewModel {
                 // Connection lost
             }
             isLiveUpdating = false
+        }
+    }
+
+    private func recordHistory() {
+        guard let stats else { return }
+        if stats.cpuCores > 0, let load1 = Double(stats.load.oneMin) {
+            let util = min(load1 / Double(stats.cpuCores), 1.0)
+            cpuHistory.append(util)
+            if cpuHistory.count > Self.maxHistoryPoints { cpuHistory.removeFirst() }
+        }
+        let mem = stats.memory.usedPercent
+        if mem > 0 {
+            memoryHistory.append(mem)
+            if memoryHistory.count > Self.maxHistoryPoints { memoryHistory.removeFirst() }
         }
     }
 }
@@ -240,6 +262,8 @@ struct ServerDetailView: View {
                     isLiveUpdating: viewModel.isLiveUpdating,
                     rxRate: viewModel.rxRate,
                     txRate: viewModel.txRate,
+                    cpuHistory: viewModel.cpuHistory,
+                    memoryHistory: viewModel.memoryHistory,
                     dockerActionInProgress: viewModel.dockerActionInProgress,
                     onDockerAction: { action, container in
                         Task { await viewModel.dockerAction(action, container: container) }
@@ -315,6 +339,8 @@ struct StatsContentView: View {
     var isLiveUpdating: Bool = false
     var rxRate: Int64 = 0
     var txRate: Int64 = 0
+    var cpuHistory: [Double] = []
+    var memoryHistory: [Double] = []
     var dockerActionInProgress: Set<String> = []
     var onDockerAction: ((String, DockerContainer) -> Void)? = nil
     var isCheckingDockerUpdates: Bool = false
@@ -500,6 +526,11 @@ struct StatsContentView: View {
                         .tint(memoryTint(stats.memory.usedPercent))
                         .animation(.easeOut, value: stats.memory.usedPercent)
 
+                    if !memoryHistory.isEmpty {
+                        SparklineView(data: memoryHistory, color: .purple)
+                            .frame(height: 40)
+                    }
+
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Used")
@@ -647,6 +678,10 @@ struct StatsContentView: View {
                             ProgressView(value: utilization)
                                 .tint(cpuTint(utilization))
                                 .animation(.easeOut, value: utilization)
+                            if !cpuHistory.isEmpty {
+                                SparklineView(data: cpuHistory, color: .indigo)
+                                    .frame(height: 40)
+                            }
                             Text("\(Int(utilization * 100))% utilization")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -1468,5 +1503,53 @@ struct ProxmoxRow: View {
         }
         .buttonStyle(.plain)
         .help(tooltip)
+    }
+}
+
+// MARK: - Sparkline
+
+struct SparklineView: View {
+    let data: [Double]
+    var color: Color = .blue
+
+    var body: some View {
+        GeometryReader { geo in
+            let lo = max((data.min() ?? 0) - 0.05, 0)
+            let hi = max((data.max() ?? 1) + 0.05, lo + 0.01)
+            let w = geo.size.width
+            let h = geo.size.height
+
+            let points: [CGPoint] = data.enumerated().map { i, val in
+                let x = data.count > 1 ? w * CGFloat(i) / CGFloat(data.count - 1) : w / 2
+                let y = h - h * CGFloat((val - lo) / (hi - lo))
+                return CGPoint(x: x, y: y)
+            }
+
+            ZStack {
+                // Fill
+                Path { path in
+                    guard let first = points.first else { return }
+                    path.move(to: CGPoint(x: first.x, y: h))
+                    path.addLine(to: first)
+                    for pt in points.dropFirst() { path.addLine(to: pt) }
+                    path.addLine(to: CGPoint(x: points.last!.x, y: h))
+                    path.closeSubpath()
+                }
+                .fill(
+                    LinearGradient(
+                        colors: [color.opacity(0.25), color.opacity(0.02)],
+                        startPoint: .top, endPoint: .bottom
+                    )
+                )
+
+                // Line
+                Path { path in
+                    guard let first = points.first else { return }
+                    path.move(to: first)
+                    for pt in points.dropFirst() { path.addLine(to: pt) }
+                }
+                .stroke(color, style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round))
+            }
+        }
     }
 }
